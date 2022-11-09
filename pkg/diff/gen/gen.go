@@ -80,23 +80,7 @@ func (g *Generator) NewAlterTableDropColumn(col *model.Column) string {
 }
 
 func (g *Generator) NewCreateIndex(idx *model.Index) string {
-
-	def := idx.Tree
-
-	ci := &tree.CreateIndex{
-		Name:             def.Name,
-		Table:            idx.Table.Tree.Table,
-		Inverted:         def.Inverted,
-		Columns:          def.Columns,
-		Sharded:          def.Sharded,
-		Storing:          def.Storing,
-		PartitionByIndex: def.PartitionByIndex,
-		StorageParams:    def.StorageParams,
-		Predicate:        def.Predicate,
-		NotVisible:       def.NotVisible,
-	}
-
-	return g.string(ci)
+	return g.string(idx.Tree)
 }
 
 func (g *Generator) NewDropIndex(idx *model.Index) string {

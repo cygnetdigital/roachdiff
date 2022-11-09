@@ -58,7 +58,7 @@ func (m *Model) addIndex(ci *tree.CreateIndex) error {
 		return fmt.Errorf("table '%s' not found", table)
 	}
 
-	return tbl.addIndex(ci)
+	return tbl.Indexes.add(ci)
 }
 
 type TableList struct {

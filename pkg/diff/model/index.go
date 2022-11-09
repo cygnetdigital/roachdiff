@@ -21,12 +21,38 @@ func newIndexList(table *Table) *IndexList {
 	}
 }
 
-func (il *IndexList) add(idxdef *tree.IndexTableDef) error {
+func (il *IndexList) add(ci *tree.CreateIndex) error {
+	if ci.Name.String() == "\"\"" {
+		return fmt.Errorf("index name is required")
+	}
+
+	idx := newIndex(il.table, ci)
+
+	il.indexMap[ci.Name.String()] = idx
+	il.indexes = append(il.indexes, idx)
+	return nil
+}
+
+func (il *IndexList) addTableDef(idxdef *tree.IndexTableDef) error {
 	if idxdef.Name.String() == "\"\"" {
 		return fmt.Errorf("all indicies must be named")
 	}
 
-	idx := newIndex(il.table, idxdef)
+	idx := newIndex(il.table, &tree.CreateIndex{
+		Table:            il.table.Tree.Table,
+		Name:             idxdef.Name,
+		Inverted:         idxdef.Inverted,
+		Columns:          idxdef.Columns,
+		Sharded:          idxdef.Sharded,
+		Storing:          idxdef.Storing,
+		PartitionByIndex: idxdef.PartitionByIndex,
+		StorageParams:    idxdef.StorageParams,
+		Predicate:        idxdef.Predicate,
+		NotVisible:       idxdef.NotVisible,
+		Unique:           false,
+		IfNotExists:      false,
+		Concurrently:     false,
+	})
 
 	il.indexMap[idxdef.Name.String()] = idx
 	il.indexes = append(il.indexes, idx)
@@ -36,10 +62,10 @@ func (il *IndexList) add(idxdef *tree.IndexTableDef) error {
 type Index struct {
 	Table *Table
 	Name  string
-	Tree  *tree.IndexTableDef
+	Tree  *tree.CreateIndex
 }
 
-func newIndex(tbl *Table, idx *tree.IndexTableDef) *Index {
+func newIndex(tbl *Table, idx *tree.CreateIndex) *Index {
 	return &Index{
 		Table: tbl,
 		Tree:  idx,

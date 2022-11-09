@@ -2,14 +2,18 @@ package diff
 
 import (
 	"bufio"
+	"bytes"
+	_ "embed"
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 )
 
+//go:embed testdata/tests.sql
+var testsSQL []byte
+
 func TestDiff(t *testing.T) {
-	tests := parseTestData(t, "./testdata/tests.sql")
+	tests := parseTestData(t, testsSQL)
 
 	for _, tc := range tests {
 		t.Run(tc.Name, func(t *testing.T) {
@@ -29,15 +33,10 @@ func TestDiff(t *testing.T) {
 	}
 }
 
-func parseTestData(t *testing.T, path string) []*testcase {
+func parseTestData(t *testing.T, contents []byte) []*testcase {
 	t.Helper()
 
-	file, err := os.Open(path)
-	if err != nil {
-		t.Fatalf("failed to read path: %v", err)
-	}
-
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(bytes.NewBuffer(contents))
 
 	var tests []*testcase
 	var tc *testcase

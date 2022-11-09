@@ -34,7 +34,7 @@ func NewTable(ct *tree.CreateTable) (*Table, error) {
 			tbl.Columns.add(t)
 
 		case *tree.IndexTableDef:
-			if err := tbl.Indexes.add(t); err != nil {
+			if err := tbl.Indexes.addTableDef(t); err != nil {
 				return nil, fmt.Errorf("unable to add index: %w", err)
 			}
 
@@ -59,19 +59,4 @@ func NewTable(ct *tree.CreateTable) (*Table, error) {
 	}
 
 	return tbl, nil
-}
-
-// addIndex with a `CreateIndex` call.
-func (t *Table) addIndex(ci *tree.CreateIndex) error {
-	return t.Indexes.add(&tree.IndexTableDef{
-		Name:             ci.Name,
-		Columns:          ci.Columns,
-		Sharded:          ci.Sharded,
-		Storing:          ci.Storing,
-		Inverted:         ci.Inverted,
-		PartitionByIndex: ci.PartitionByIndex,
-		StorageParams:    ci.StorageParams,
-		Predicate:        ci.Predicate,
-		NotVisible:       ci.NotVisible,
-	})
 }

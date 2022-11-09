@@ -115,6 +115,15 @@ CREATE INDEX foo_idx ON a (id);
 CREATE INDEX bar_idx ON a (id);
 ----
 
+---- Test: Add unique and partial index
+CREATE TABLE a (id string PRIMARY KEY);
+----
+CREATE TABLE a (id string PRIMARY KEY);
+CREATE UNIQUE INDEX foo_idx ON a (id) WHERE id = 'baz';
+----
+CREATE UNIQUE INDEX foo_idx ON a (id) WHERE id = 'baz';
+----
+
 ---- Test: adds multiple indexes across tables
 CREATE TABLE a (id string PRIMARY KEY);
 CREATE TABLE b (id string PRIMARY KEY);
