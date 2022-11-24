@@ -2,6 +2,7 @@ package gen
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/cockroachdb/cockroachdb-parser/pkg/sql/sem/tree"
 	"github.com/cygnetdigital/roachdiff/pkg/diff/model"
@@ -33,8 +34,13 @@ func (g *Generator) string(stm tree.NodeFormatter) string {
 
 func (g *Generator) stringWithWarning(stm tree.NodeFormatter) string {
 	if g.Warnings {
+		// convert statement to string
+		s := g.string(stm)
+		// add hypen comments to each new line
+		s = strings.ReplaceAll(s, "\n", "\n--")
+
 		warning := `WARNING: This is a destructive operation`
-		return fmt.Sprintf("-- %s\n-- %s", warning, g.string(stm))
+		return fmt.Sprintf("-- %s\n-- %s", warning, s)
 	}
 
 	return g.string(stm)
