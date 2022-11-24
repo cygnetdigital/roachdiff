@@ -48,6 +48,7 @@ func (d *Differ) Run() (*Diff, error) {
 		CreateIndexes,
 		DropConstraints,
 		CreateConstraints,
+		AlterConstraints,
 		ColumnNullability,
 	}
 

@@ -32,6 +32,9 @@ func NewTable(ct *tree.CreateTable) (*Table, error) {
 		switch t := def.(type) {
 		case *tree.ColumnTableDef:
 			tbl.Columns.add(t)
+			if err := tbl.Constraints.addByCol(t); err != nil {
+				return nil, err
+			}
 
 		case *tree.IndexTableDef:
 			if err := tbl.Indexes.addTableDef(t); err != nil {

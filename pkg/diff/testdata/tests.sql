@@ -202,6 +202,29 @@ ALTER TABLE c DROP CONSTRAINT bar_ctn;
 ----
 
 
+---- Test: drop a foreign key reference
+CREATE TABLE a (id string PRIMARY KEY);
+CREATE TABLE b (id string PRIMARY KEY, a_id string NOT NULL REFERENCES a (id));
+----
+CREATE TABLE a (id string PRIMARY KEY);
+CREATE TABLE b (id string PRIMARY KEY, a_id string NOT NULL);
+----
+ALTER TABLE b DROP CONSTRAINT b_a_id_fkey;
+----
+
+
+---- Test: modify a foreign key constraint
+CREATE TABLE a (id string PRIMARY KEY);
+CREATE TABLE b (id string PRIMARY KEY, a_id string NOT NULL REFERENCES a (id));
+----
+CREATE TABLE a (id string PRIMARY KEY);
+CREATE TABLE b (id string PRIMARY KEY, a_id string NOT NULL REFERENCES a (id) ON DELETE CASCADE);
+----
+ALTER TABLE b DROP CONSTRAINT b_a_id_fkey;
+ALTER TABLE b ADD CONSTRAINT b_a_id_fkey FOREIGN KEY (a_id) REFERENCES a (id) ON DELETE CASCADE;
+----
+
+
 ---- Test: columns can be set NOT NULL
 CREATE TABLE a (id string PRIMARY KEY, foo string NULL);
 ----

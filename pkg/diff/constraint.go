@@ -56,3 +56,35 @@ func DropConstraints(d *Diff, a, b *model.Model) error {
 
 	return nil
 }
+
+func AlterConstraints(d *Diff, a, b *model.Model) error {
+
+	// look for new constraints by looking for table matches
+	for _, tblNew := range b.Tables.All() {
+
+		// skip if no matching table
+		tblOld, ok := a.Tables.Find(tblNew.Name)
+		if !ok {
+			continue
+		}
+
+		// now compare all constraints
+		for _, constNew := range tblNew.Constraints.All() {
+
+			// find the matching column, if it doesnt exists do nothing
+			constOld, ok := tblOld.Constraints.Find(constNew.Name)
+			if !ok {
+				continue
+			}
+
+			if constOld.Equal(constNew) {
+				continue
+			}
+
+			d.append(d.gen.NewAlterTableDropConstraint(constOld))
+			d.append(d.gen.NewAlterTableAddConstraint(constNew))
+		}
+	}
+
+	return nil
+}
