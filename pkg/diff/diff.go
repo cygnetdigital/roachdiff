@@ -70,15 +70,22 @@ func (d *Differ) Run() (*Diff, error) {
 }
 
 type Diff struct {
-	sb  strings.Builder
-	gen *gen.Generator
+	sb        strings.Builder
+	gen       *gen.Generator
+	dangerous bool
 }
 
-func (d *Diff) append(str string) {
+func (d *Diff) append(str string, dangerous bool) {
+	d.dangerous = d.dangerous || dangerous
 	d.sb.WriteString(str)
 	d.sb.WriteString("\n")
 }
 
 func (d *Diff) String() string {
 	return d.sb.String()
+}
+
+// Dangerous returns true if the diff contains dangerous statements
+func (d *Diff) Dangerous() bool {
+	return d.dangerous
 }
