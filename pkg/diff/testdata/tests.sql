@@ -256,3 +256,81 @@ CREATE TABLE a (id string PRIMARY KEY, foo string);
 ----
 ALTER TABLE a ALTER COLUMN foo DROP NOT NULL;
 ----
+
+---- Test: enums can be created
+----
+CREATE TYPE a AS ENUM ('foo', 'bar', 'baz');
+----
+CREATE TYPE a AS ENUM ('foo', 'bar', 'baz');
+----
+
+---- Test: enums can be dropped
+CREATE TYPE a AS ENUM ('foo', 'bar', 'baz');
+----
+----
+DROP TYPE a;
+----
+
+---- Test: enums can be modified to be larger
+CREATE TYPE a AS ENUM ('foo', 'bar');
+----
+CREATE TYPE a AS ENUM ('foo', 'baz', 'bar');
+----
+ALTER TYPE a ADD VALUE 'baz' AFTER 'foo';
+----
+
+---- Test: enums can be enlarged at the end
+CREATE TYPE a AS ENUM ('foo', 'bar');
+----
+CREATE TYPE a AS ENUM ('foo', 'bar', 'baz');
+----
+ALTER TYPE a ADD VALUE 'baz' AFTER 'bar';
+----
+
+---- Test: enums can be enlarged at the beginning
+CREATE TYPE a AS ENUM ('foo', 'bar');
+----
+CREATE TYPE a AS ENUM ('baz', 'foo', 'bar');
+----
+ALTER TYPE a ADD VALUE 'baz' BEFORE 'foo';
+----
+
+---- Test: enums can be enlarged from empty
+CREATE TYPE a AS ENUM ();
+----
+CREATE TYPE a AS ENUM ('foo');
+----
+ALTER TYPE a ADD VALUE 'foo';
+----
+
+
+---- Test: enums can be modified to be smaller
+CREATE TYPE a AS ENUM ('foo', 'bar', 'baz');
+----
+CREATE TYPE a AS ENUM ('foo', 'bar');
+----
+ALTER TYPE a DROP VALUE 'baz';
+----
+
+---- Test: enums can be modified to be empty
+CREATE TYPE a AS ENUM ('foo', 'bar');
+----
+CREATE TYPE a AS ENUM ();
+----
+ALTER TYPE a DROP VALUE 'foo';
+ALTER TYPE a DROP VALUE 'bar';
+----
+
+---- Test: complicated enum modifications
+CREATE TYPE a AS ENUM ('foo', 'bar', 'baz');
+----
+CREATE TYPE a AS ENUM ('corge', 'grault', 'foo','waldo', 'fred', 'plugh', 'bar', 'baz', 'qux', 'qix');
+----
+ALTER TYPE a ADD VALUE 'corge' BEFORE 'foo';
+ALTER TYPE a ADD VALUE 'grault' BEFORE 'foo';
+ALTER TYPE a ADD VALUE 'waldo' AFTER 'foo';
+ALTER TYPE a ADD VALUE 'fred' AFTER 'waldo';
+ALTER TYPE a ADD VALUE 'plugh' AFTER 'fred';
+ALTER TYPE a ADD VALUE 'qux' AFTER 'baz';
+ALTER TYPE a ADD VALUE 'qix' AFTER 'qux';
+----

@@ -10,9 +10,10 @@ import (
 // Model is the declarative representation of a sql schema
 type Model struct {
 	Tables *TableList
+	Enums  *EnumList
 }
 
-// NewModel parses a set of `CREATE TABLE` statements
+// NewModel parses a set of `CREATE (TABLE|ENUM)` statements
 // to produce a model
 func NewModel(sql string) (*Model, error) {
 	statements, err := parser.Parse(sql)
@@ -22,6 +23,7 @@ func NewModel(sql string) (*Model, error) {
 
 	model := &Model{
 		Tables: newTableList(),
+		Enums:  newEnumList(),
 	}
 
 	for _, stmt := range statements {
@@ -34,6 +36,11 @@ func NewModel(sql string) (*Model, error) {
 
 		case *tree.CreateIndex:
 			if err := model.addIndex(stm); err != nil {
+				return nil, err
+			}
+
+		case *tree.CreateType:
+			if err := model.addEnum(stm); err != nil {
 				return nil, err
 			}
 
@@ -59,6 +66,10 @@ func (m *Model) addIndex(ci *tree.CreateIndex) error {
 	}
 
 	return tbl.Indexes.add(ci)
+}
+
+func (m *Model) addEnum(ct *tree.CreateType) error {
+	return m.Enums.add(ct)
 }
 
 type TableList struct {
@@ -92,4 +103,36 @@ func (tl *TableList) All() []*Table {
 func (tl *TableList) Find(name string) (*Table, bool) {
 	t, ok := tl.tableMap[name]
 	return t, ok
+}
+
+type EnumList struct {
+	enums   []*Enum
+	enumMap map[string]*Enum
+}
+
+func newEnumList() *EnumList {
+	return &EnumList{
+		enumMap: make(map[string]*Enum),
+	}
+}
+
+func (el *EnumList) add(ce *tree.CreateType) error {
+	e, err := NewEnum(ce)
+	if err != nil {
+		return fmt.Errorf("unable to parse CREATE TYPE %s statement: %w", ce.TypeName.String(), err)
+	}
+
+	el.enumMap[e.Name] = e
+	el.enums = append(el.enums, e)
+	return nil
+}
+
+func (el *EnumList) All() []*Enum {
+	return el.enums
+}
+
+// Find enum by name
+func (el *EnumList) Find(name string) (*Enum, bool) {
+	e, ok := el.enumMap[name]
+	return e, ok
 }

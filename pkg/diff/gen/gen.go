@@ -152,3 +152,38 @@ func (g *Generator) NewAlterTableAlterColumnDropNotNull(col *model.Column) strin
 
 	return g.stringWithWarning(stm)
 }
+
+func (g *Generator) NewCreateEnum(enum *model.Enum) string {
+	return g.string(enum.Enum)
+}
+
+func (g *Generator) NewDropEnum(enum *model.Enum) string {
+	de := &tree.DropType{
+		Names: []*tree.UnresolvedObjectName{enum.Enum.TypeName},
+	}
+
+	return g.stringWithWarning(de)
+}
+
+func (g *Generator) NewAlterTypeAddValue(enum *model.Enum, value string, placement *tree.AlterTypeAddValuePlacement) string {
+	at := &tree.AlterType{
+		Type: enum.Enum.TypeName,
+		Cmd: &tree.AlterTypeAddValue{
+			NewVal:    tree.EnumValue(value),
+			Placement: placement,
+		},
+	}
+
+	return g.string(at)
+}
+
+func (g *Generator) NewAlterTypeDropValue(enum *model.Enum, value string) string {
+	at := &tree.AlterType{
+		Type: enum.Enum.TypeName,
+		Cmd: &tree.AlterTypeDropValue{
+			Val: tree.EnumValue(value),
+		},
+	}
+
+	return g.stringWithWarning(at)
+}
