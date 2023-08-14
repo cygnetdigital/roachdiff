@@ -75,9 +75,9 @@ type Diff struct {
 	dangerous bool
 }
 
-func (d *Diff) append(str string, dangerous bool) {
-	d.dangerous = d.dangerous || dangerous
-	d.sb.WriteString(str)
+func (d *Diff) append(s gen.Statement) {
+	d.dangerous = d.dangerous || s.HasWarning
+	d.sb.WriteString(s.SQL)
 	d.sb.WriteString("\n")
 }
 
