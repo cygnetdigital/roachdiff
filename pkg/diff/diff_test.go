@@ -97,3 +97,44 @@ type testcase struct {
 	New    string
 	Output string
 }
+
+type warningCase struct {
+	name       string
+	orig       string
+	new        string
+	shouldWarn bool
+}
+
+var warningCases = []warningCase{
+	{
+		name:       "drop table",
+		orig:       "CREATE TABLE foo (id int);\nCREATE TABLE bar (id int)",
+		new:        "CREATE TABLE foo (id int)",
+		shouldWarn: true,
+	},
+
+	{
+		name:       "unchanged table",
+		orig:       "CREATE TABLE foo (id int)",
+		new:        "CREATE TABLE foo (id int)",
+		shouldWarn: false,
+	},
+}
+
+func TestDiffWarning(t *testing.T) {
+	for _, tc := range warningCases {
+		t.Run(tc.name, func(t *testing.T) {
+			differ := NewDiffer(tc.orig, tc.new)
+			differ.Generator.Warnings = true
+			diff, err := differ.Run()
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if diff.Dangerous() != tc.shouldWarn {
+				t.Fatalf("expected %v, got %v", tc.shouldWarn, diff.Dangerous())
+			}
+		})
+
+	}
+}

@@ -16,6 +16,12 @@ type Generator struct {
 	Warnings bool
 }
 
+// Statement encapsulates a SQL statement, and whether it should generate a warning
+type Statement struct {
+	SQL        string
+	HasWarning bool
+}
+
 // NewGenerator configures a generator with sensible defaults
 func NewGenerator() *Generator {
 	cfg := tree.DefaultPrettyCfg()
@@ -28,29 +34,36 @@ func NewGenerator() *Generator {
 	return &Generator{PrettyCfg: cfg}
 }
 
-func (g *Generator) string(stm tree.NodeFormatter) string {
-	return fmt.Sprintf("%s;", g.PrettyCfg.Pretty(stm))
+func (g *Generator) string(stm tree.NodeFormatter) Statement {
+	return Statement{
+		SQL:        fmt.Sprintf("%s;", g.PrettyCfg.Pretty(stm)),
+		HasWarning: false,
+	}
 }
 
-func (g *Generator) stringWithWarning(stm tree.NodeFormatter) string {
+func (g *Generator) stringWithWarning(stm tree.NodeFormatter) Statement {
 	if g.Warnings {
 		// convert statement to string
-		s := g.string(stm)
+		stmt := g.string(stm)
+
 		// add hypen comments to each new line
-		s = strings.ReplaceAll(s, "\n", "\n--")
+		s := strings.ReplaceAll(stmt.SQL, "\n", "\n--")
 
 		warning := `WARNING: This is a destructive operation`
-		return fmt.Sprintf("-- %s\n-- %s", warning, s)
+		return Statement{
+			SQL:        fmt.Sprintf("-- %s\n-- %s", warning, s),
+			HasWarning: true,
+		}
 	}
 
 	return g.string(stm)
 }
 
-func (g *Generator) NewCreateTable(table *model.Table) string {
+func (g *Generator) NewCreateTable(table *model.Table) Statement {
 	return g.string(table.Tree)
 }
 
-func (g *Generator) NewDropTable(table *model.Table) string {
+func (g *Generator) NewDropTable(table *model.Table) Statement {
 
 	dt := &tree.DropTable{
 		Names: tree.TableNames{table.Tree.Table},
@@ -59,7 +72,7 @@ func (g *Generator) NewDropTable(table *model.Table) string {
 	return g.stringWithWarning(dt)
 }
 
-func (g *Generator) NewAlterTableAddColumn(col *model.Column) string {
+func (g *Generator) NewAlterTableAddColumn(col *model.Column) Statement {
 	at := &tree.AlterTable{
 		Table: col.Table.Tree.Table.ToUnresolvedObjectName(),
 		Cmds: tree.AlterTableCmds{
@@ -72,7 +85,7 @@ func (g *Generator) NewAlterTableAddColumn(col *model.Column) string {
 	return g.string(at)
 }
 
-func (g *Generator) NewAlterTableDropColumn(col *model.Column) string {
+func (g *Generator) NewAlterTableDropColumn(col *model.Column) Statement {
 	dc := &tree.AlterTable{
 		Table: col.Table.Tree.Table.ToUnresolvedObjectName(),
 		Cmds: tree.AlterTableCmds{
@@ -85,11 +98,11 @@ func (g *Generator) NewAlterTableDropColumn(col *model.Column) string {
 	return g.stringWithWarning(dc)
 }
 
-func (g *Generator) NewCreateIndex(idx *model.Index) string {
+func (g *Generator) NewCreateIndex(idx *model.Index) Statement {
 	return g.string(idx.Tree)
 }
 
-func (g *Generator) NewDropIndex(idx *model.Index) string {
+func (g *Generator) NewDropIndex(idx *model.Index) Statement {
 	ci := &tree.DropIndex{
 		IndexList: tree.TableIndexNames{
 			&tree.TableIndexName{
@@ -102,7 +115,7 @@ func (g *Generator) NewDropIndex(idx *model.Index) string {
 	return g.stringWithWarning(ci)
 }
 
-func (g *Generator) NewAlterTableAddConstraint(cons *model.Constraint) string {
+func (g *Generator) NewAlterTableAddConstraint(cons *model.Constraint) Statement {
 	at := &tree.AlterTable{
 		Table: cons.Table.Tree.Table.ToUnresolvedObjectName(),
 		Cmds: tree.AlterTableCmds{
@@ -115,7 +128,7 @@ func (g *Generator) NewAlterTableAddConstraint(cons *model.Constraint) string {
 	return g.stringWithWarning(at)
 }
 
-func (g *Generator) NewAlterTableDropConstraint(cons *model.Constraint) string {
+func (g *Generator) NewAlterTableDropConstraint(cons *model.Constraint) Statement {
 	at := &tree.AlterTable{
 		Table: cons.Table.Tree.Table.ToUnresolvedObjectName(),
 		Cmds: tree.AlterTableCmds{
@@ -127,7 +140,7 @@ func (g *Generator) NewAlterTableDropConstraint(cons *model.Constraint) string {
 	return g.stringWithWarning(at)
 }
 
-func (g *Generator) NewAlterTableAlterColumnSetNotNull(col *model.Column) string {
+func (g *Generator) NewAlterTableAlterColumnSetNotNull(col *model.Column) Statement {
 	stm := &tree.AlterTable{
 		Table: col.Table.Tree.Table.ToUnresolvedObjectName(),
 		Cmds: tree.AlterTableCmds{
@@ -140,7 +153,7 @@ func (g *Generator) NewAlterTableAlterColumnSetNotNull(col *model.Column) string
 	return g.stringWithWarning(stm)
 }
 
-func (g *Generator) NewAlterTableAlterColumnDropNotNull(col *model.Column) string {
+func (g *Generator) NewAlterTableAlterColumnDropNotNull(col *model.Column) Statement {
 	stm := &tree.AlterTable{
 		Table: col.Table.Tree.Table.ToUnresolvedObjectName(),
 		Cmds: tree.AlterTableCmds{
@@ -153,11 +166,11 @@ func (g *Generator) NewAlterTableAlterColumnDropNotNull(col *model.Column) strin
 	return g.stringWithWarning(stm)
 }
 
-func (g *Generator) NewCreateEnum(enum *model.Enum) string {
+func (g *Generator) NewCreateEnum(enum *model.Enum) Statement {
 	return g.string(enum.Enum)
 }
 
-func (g *Generator) NewDropEnum(enum *model.Enum) string {
+func (g *Generator) NewDropEnum(enum *model.Enum) Statement {
 	de := &tree.DropType{
 		Names: []*tree.UnresolvedObjectName{enum.Enum.TypeName},
 	}
@@ -165,7 +178,7 @@ func (g *Generator) NewDropEnum(enum *model.Enum) string {
 	return g.stringWithWarning(de)
 }
 
-func (g *Generator) NewAlterTypeAddValue(enum *model.Enum, value string, placement *tree.AlterTypeAddValuePlacement) string {
+func (g *Generator) NewAlterTypeAddValue(enum *model.Enum, value string, placement *tree.AlterTypeAddValuePlacement) Statement {
 	at := &tree.AlterType{
 		Type: enum.Enum.TypeName,
 		Cmd: &tree.AlterTypeAddValue{
@@ -177,7 +190,7 @@ func (g *Generator) NewAlterTypeAddValue(enum *model.Enum, value string, placeme
 	return g.string(at)
 }
 
-func (g *Generator) NewAlterTypeDropValue(enum *model.Enum, value string) string {
+func (g *Generator) NewAlterTypeDropValue(enum *model.Enum, value string) Statement {
 	at := &tree.AlterType{
 		Type: enum.Enum.TypeName,
 		Cmd: &tree.AlterTypeDropValue{
