@@ -42,21 +42,18 @@ func (g *Generator) string(stm tree.NodeFormatter) Statement {
 }
 
 func (g *Generator) stringWithWarning(stm tree.NodeFormatter) Statement {
-	if g.Warnings {
-		// convert statement to string
-		stmt := g.string(stm)
+	stmt := g.string(stm)
+	stmt.HasWarning = true
 
+	if g.Warnings {
 		// add hypen comments to each new line
 		s := strings.ReplaceAll(stmt.SQL, "\n", "\n--")
 
 		warning := `WARNING: This is a destructive operation`
-		return Statement{
-			SQL:        fmt.Sprintf("-- %s\n-- %s", warning, s),
-			HasWarning: true,
-		}
+		stmt.SQL = fmt.Sprintf("-- %s\n-- %s", warning, s)
 	}
 
-	return g.string(stm)
+	return stmt
 }
 
 func (g *Generator) NewCreateTable(table *model.Table) Statement {
