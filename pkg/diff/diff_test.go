@@ -119,13 +119,13 @@ var warningCases = []warningCase{
 		new:        "CREATE TABLE foo (id int)",
 		shouldWarn: false,
 	},
+	
 }
 
 func TestDiffWarning(t *testing.T) {
 	for _, tc := range warningCases {
 		t.Run(tc.name, func(t *testing.T) {
 			differ := NewDiffer(tc.orig, tc.new)
-			differ.Generator.Warnings = true
 			diff, err := differ.Run()
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
@@ -135,6 +135,5 @@ func TestDiffWarning(t *testing.T) {
 				t.Fatalf("expected %v, got %v", tc.shouldWarn, diff.Dangerous())
 			}
 		})
-
 	}
 }
