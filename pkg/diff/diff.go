@@ -40,6 +40,10 @@ func (d *Differ) Run() (*Diff, error) {
 	}
 
 	funcs := []diffFunc{
+		CreateEnum,
+		DropEnum,
+		CreateEnumValues,
+		DropEnumValues,
 		CreateTable,
 		DropTable,
 		DropColumns,
@@ -50,10 +54,6 @@ func (d *Differ) Run() (*Diff, error) {
 		CreateConstraints,
 		AlterConstraints,
 		ColumnNullability,
-		CreateEnum,
-		DropEnum,
-		CreateEnumValues,
-		DropEnumValues,
 	}
 
 	diff := &Diff{
