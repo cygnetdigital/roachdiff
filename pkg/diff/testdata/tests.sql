@@ -334,3 +334,15 @@ ALTER TYPE a ADD VALUE 'plugh' AFTER 'fred';
 ALTER TYPE a ADD VALUE 'qux' AFTER 'baz';
 ALTER TYPE a ADD VALUE 'qix' AFTER 'qux';
 ----
+
+---- Test: enums are defined before the table they are used in.
+CREATE TABLE b (id STRING PRIMARY KEY);
+----
+CREATE TYPE a AS ENUM ('foo', 'bar', 'baz');
+CREATE TABLE b (id STRING PRIMARY KEY, a_id a);
+CREATE TABLE c (id STRING PRIMARY KEY, a_id a);
+----
+CREATE TYPE a AS ENUM ('foo', 'bar', 'baz');
+CREATE TABLE c (id STRING PRIMARY KEY, a_id a);
+ALTER TABLE b ADD COLUMN a_id a;
+----
